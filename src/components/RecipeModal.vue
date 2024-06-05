@@ -1,17 +1,27 @@
 <template>
   <section class="flex justify-center" v-if="recipe">
     <!-- Main modal -->
-    <div id="recipeModal" class="w-full max-w-4xl">
-      <div class="relative p-4 w-full h-full md:h-auto">
+<div id="default-modal" tabindex="-1" aria-hidden="true" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full h-full md:h-auto">
         <!-- Modal content -->
         <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
           <!-- Modal header -->
           <div
             class="flex justify-between items-center items-start p-4 rounded-t border-b dark:border-gray-600"
           >
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-              {{ recipe.name }}
+            <h3 v-if="!editStatus" class="text-xl font-semibold text-gray-900 dark:text-white" >
+              {{updatedName || recipe.name}}
+              <i class="fas fa-edit" @click="editName"></i>
             </h3>
+          <div class="w-64" v-else>
+ 
+    <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+    <div class="relative">
+        <input type="search" id="default-search" class="block w-full p-4 w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500" v-model="inputValue" required />
+        <button type="submit" class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-4 py-2" @click="saveChanges">Save</button>
+    </div>
+
+          </div>
                          <img :src="recipe.image" alt="" class="rounded-md w-[5%]" />
 
           </div>
@@ -72,22 +82,39 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import useRecipeStore from "@/stores/recipeStore";
 import RecipeCard from "@/components/RecipeCard.vue";
-
+// const props = defineProps(['recipe','name'])
 const store = useRecipeStore();
 const { recipes } = storeToRefs(store);
 const route = useRoute();
 const recipe = ref(null);
+const updatedName = ref("");
+const editStatus = ref(false);
+const inputValue = ref('');
+const emitValue2 = defineEmits("updatedNameToParent")
 
-onMounted(async () => {
-  await store.getAllRecipe();
+onMounted(() => {
+   store.getAllRecipe();
   recipe.value = recipes.value.find((item) => item.id == route.params.id);
   console.log(recipe.value);
 });
+const recipeUpdate = computed(()=>{
+  return recipe.value
+})
+const editName =()=>{
+  editStatus.value = true
+  // updatedName.value = prompt('Edit Recipe Name')
+  // console.log(updatedName.value);
+}
+const saveChanges=()=>{
+  editStatus.value = false
+  updatedName.value = inputValue.value
+  emitValue2('updatedNameToParent', updatedName)
+}
 </script>
 
 <style>
